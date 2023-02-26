@@ -179,9 +179,6 @@ def main(args):
         
         wandb_run.log_artifact(artifact)
 
-        wandb.log_artifact(artifact)
-
-
 if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
