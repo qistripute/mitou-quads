@@ -10,6 +10,7 @@ from models.parameters import QuadsParam, CMAParam
 from utils.objective_functions import objective_functions
 from utils.plot_tools import plot_function_surface
 from typing import Callable
+import os
 
 def get_sample_size(dim):
     return int(4+np.log(dim)*3)
@@ -84,8 +85,7 @@ def wandb_log(result):
 
     opt_process = [[i, x, y] for i in range(len(eval_hists)) for (x, y) in zip(eval_hists[i], min_func_hists[i]) ]
     table = wandb.Table(data=opt_process, columns = ["trial", "x", "y"])
-    wandb.log({"optimization process" : wandb.plot.line(table, "x", "y",
-               title="Optimization Process")})
+    wandb.log({"optimization process" : table})
 
 def run_trials(func, config):
     eval_hists = []
@@ -167,17 +167,17 @@ def main(args):
         tags=[args.func, args.method, args.sampler_type] 
     ) as wandb_run:
         
-        artifact = wandb.Artifact(f"result-{args.sampler_type}-{args.method}-{args.func}", type="result")
-
         wandb.log({"func": plot_function_surface(*objective_functions[args.func](dim=2), func_name=args.func, init_mu=init_mean)})
         result = run_trials(func, config)
         result = results_postprocess(result, config)
         wandb_log(result)
 
-        with artifact.new_file(f"result.pickle", mode='wb') as f:
+        save_path = os.path.join(wandb.run.dir, "result.pickle")
+        with open(save_path, mode='wb') as f:
             pickle.dump(result, f)
-        
-        wandb_run.log_artifact(artifact)
+
+        wandb.save(save_path)
+
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
